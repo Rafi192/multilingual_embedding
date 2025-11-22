@@ -10,5 +10,5 @@ class BGE_M3_Embedder:
     def embed(self, texts):
         if isinstance(texts, str):
             texts = [texts]
-            vectors = self.model.encode(texts, normalize_embeddings=True)
-            return np.array(vectors).tolist()
+        vectors = self.model.encode(texts, normalize_embeddings=True)
+        return np.array(vectors).tolist()
