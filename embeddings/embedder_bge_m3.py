@@ -20,15 +20,6 @@ class BGE_M3_Embedder:
 
 obj_bge_m3_embedder = BGE_M3_Embedder()
 
-# obj_bge_m3_embedder.embed("I love cats!")
-# # bangla text example
-# obj_bge_m3_embedder.embed("আমি বিড়ালকে ভালোবাসি!")
-
-# #espanol text example
-# obj_bge_m3_embedder.embed("¡Me encantan los gatos!")
-
-
-
 v_en = obj_bge_m3_embedder.embed("I love cats!")
 v_bn = obj_bge_m3_embedder.embed("আমি বিড়ালকে ভালোবাসি!")
 v_es = obj_bge_m3_embedder.embed("¡Me encantan los gatos!")
