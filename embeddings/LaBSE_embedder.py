@@ -1,0 +1,66 @@
+from sentence_transformers import SentenceTransformer
+import numpy as np
+
+
+class LaBSE_Embedder:
+    def __init__(self):
+        # Google LaBSE multilingual model
+        self.model = SentenceTransformer("sentence-transformers/LaBSE")
+
+    def embed(self, texts):
+        if isinstance(texts, str):
+            texts = [texts]
+
+        vectors = self.model.encode(texts, normalize_embeddings=True)
+        print(f"Embedded {len(texts)} texts using LaBSE.")
+        print(f"First vector (truncated): {vectors[0][:5]}...")
+        print("Vector shape:", np.array(vectors).shape)
+
+        return np.array(vectors).tolist()
+
+
+# --- Testing LaBSE Embedder ---
+obj_labse_embedder = LaBSE_Embedder()
+print("Testing LaBSE Embedder with multilingual sentences:")
+v_en = obj_labse_embedder.embed("I need milk. I love drinking milk.") # English
+v_bn = obj_labse_embedder.embed("আমি দুধ চাই। আমি দুধ খেতে ভালোবাসি।") #bangla
+v_es = obj_labse_embedder.embed("Necesito leche. Me encanta beber leche.") # Spanish
+v_fr = obj_labse_embedder.embed("J'ai besoin de lait. J'adore boire du lait.") # French
+v_hi = obj_labse_embedder.embed("मुझे दूध चाहिए। मुझे दूध पीना बहुत पसंद है।")  # Hindi
+v_ar = obj_labse_embedder.embed("أنا بحاجة إلى الحليب. أحب شرب الحليب!")    # Arabic
+v_ja = obj_labse_embedder.embed("私はミルクが必要です。ミルクを飲むのが大好きです。")    # Japanese
+v_zh = obj_labse_embedder.embed("我需要牛奶。我喜欢喝牛奶！")   # Chinese (Simplified)
+v_de = obj_labse_embedder.embed("Ich brauche Milch. Ich liebe es, Milch zu trinken.")  # German
+v_ru = obj_labse_embedder.embed("Мне нужно молоко. Я люблю пить молоко.")   # Russian
+
+v_en = np.array(v_en[0])
+v_bn = np.array(v_bn[0])
+v_es = np.array(v_es[0])
+v_fr = np.array(v_fr[0])
+v_hi = np.array(v_hi[0])
+v_ar = np.array(v_ar[0])
+v_ja = np.array(v_ja[0])
+v_zh = np.array(v_zh[0])
+v_de = np.array(v_de[0])
+v_ru = np.array(v_ru[0])
+
+def cosine(a, b): return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+pairs = [
+    ("EN–BN", v_en, v_bn),
+    ("EN–ES", v_en, v_es),
+    ("EN–FR", v_en, v_fr),
+    ("EN–HI", v_en, v_hi),
+    ("EN–AR", v_en, v_ar),
+    ("EN–JA", v_en, v_ja),
+    ("EN–ZH", v_en, v_zh),
+    ("EN–DE", v_en, v_de),
+    ("EN–RU", v_en, v_ru),
+]
+
+print("Pairs type:", type(pairs))
+
+for lang_pair, vec1, vec2 in pairs:
+    similarity = cosine(vec1, vec2)
+    print(f"{lang_pair} similarity: {similarity}")
+
