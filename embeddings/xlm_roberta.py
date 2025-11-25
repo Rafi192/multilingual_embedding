@@ -48,6 +48,8 @@ v_ru = np.array(v_ru[0])
 
 def cosine(a, b): return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
+
+
 pairs = [
     ("EN–BN", v_en, v_bn),
     ("EN–ES", v_en, v_es),
