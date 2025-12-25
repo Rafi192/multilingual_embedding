@@ -1,10 +1,10 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
-# from embedder_bge_m3 import 
+from time import time
+
 
 class XLMR_Multilingual_Embedder:
     def __init__(self):
-        # Multilingual mpnet-style embedding model (banked from XLM-R)
         self.model = SentenceTransformer(
             "sentence-transformers/distiluse-base-multilingual-cased-v2"
         )
@@ -12,43 +12,44 @@ class XLMR_Multilingual_Embedder:
     def embed(self, texts):
         if isinstance(texts, str):
             texts = [texts]
-
-        vectors = self.model.encode(texts, normalize_embeddings=True)
-        print(f"Embedded {len(texts)} texts using XLM-R Multilingual model.")
-        print(f"First vector (truncated): {vectors[0][:5]}...")
-        print("Vector shape:", np.array(vectors).shape)
-
-        return np.array(vectors).tolist()
-
-obj_xlmr_multilingual_embedder = XLMR_Multilingual_Embedder()
-print("Testing XLM-R Multilingual Embedder with multilingual sentences:")
-
-v_en = obj_xlmr_multilingual_embedder.embed("I love cats!")                            # English
-v_bn = obj_xlmr_multilingual_embedder.embed("আমি বিড়ালকে ভালোবাসি!")                  # Bangla
-v_es = obj_xlmr_multilingual_embedder.embed("¡Me encantan los gatos!")                 # Spanish
-v_fr = obj_xlmr_multilingual_embedder.embed("J'adore les chats !")                    # French
-v_hi = obj_xlmr_multilingual_embedder.embed("मुझे बिल्लियाँ बहुत पसंद हैं!")             # Hindi
-v_ar = obj_xlmr_multilingual_embedder.embed("أنا أحب القطط!")                           # Arabic
-v_ja = obj_xlmr_multilingual_embedder.embed("私は猫が大好きです！")                       # Japanese
-v_zh = obj_xlmr_multilingual_embedder.embed("我爱猫！")
-
-v_de = obj_xlmr_multilingual_embedder.embed("Ich liebe Katzen!")  # German
-v_ru = obj_xlmr_multilingual_embedder.embed("Я люблю кошек!")  # Russian
-
-v_en = np.array(v_en[0])
-v_bn = np.array(v_bn[0])
-v_es = np.array(v_es[0])
-v_fr = np.array(v_fr[0])
-v_hi = np.array(v_hi[0])
-v_ar = np.array(v_ar[0])
-v_ja = np.array(v_ja[0])
-v_zh = np.array(v_zh[0])
-v_de = np.array(v_de[0])
-v_ru = np.array(v_ru[0])
-
-def cosine(a, b): return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+        return self.model.encode(texts, normalize_embeddings=True)
 
 
+def timed_embedding(embedder, text, lang_label):
+    start = time()
+    vec = embedder.embed(text)
+    end = time()
+
+    elapsed = end - start
+    print(
+        f"{lang_label:>8} | {elapsed:.6f} sec ({elapsed*1000:.2f} ms)"
+    )
+    return vec[0]
+
+
+def cosine(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+
+# ----------------- RUN -----------------
+
+embedder = XLMR_Multilingual_Embedder()
+
+print("=== XLM-R Multilingual Embedding Time ===")
+
+v_en = timed_embedding(embedder, "I love cats!", "EN")
+v_bn = timed_embedding(embedder, "আমি বিড়ালকে ভালোবাসি!", "BN")
+v_es = timed_embedding(embedder, "¡Me encantan los gatos!", "ES")
+v_fr = timed_embedding(embedder, "J'adore les chats !", "FR")
+v_hi = timed_embedding(embedder, "मुझे बिल्लियाँ बहुत पसंद हैं!", "HI")
+v_ar = timed_embedding(embedder, "أنا أحب القطط!", "AR")
+v_ja = timed_embedding(embedder, "私は猫が大好きです！", "JA")
+v_zh = timed_embedding(embedder, "我爱猫！", "ZH")
+v_de = timed_embedding(embedder, "Ich liebe Katzen!", "DE")
+v_ru = timed_embedding(embedder, "Я люблю кошек!", "RU")
+
+
+# ----------------- SIMILARITY -----------------
 
 pairs = [
     ("EN–BN", v_en, v_bn),
@@ -62,8 +63,6 @@ pairs = [
     ("EN–RU", v_en, v_ru),
 ]
 
-for lang_pair, vec1, vec2 in pairs:
-    sim = cosine(vec1, vec2)
-    print(f"{lang_pair} similarity: {sim:.4f}")
-
-print("-------pairs type-----------\n",type(pairs),flush=True)
+print("\n=== Similarity Scores ===")
+for name, a, b in pairs:
+    print(f"{name}: {cosine(a, b):.4f}")

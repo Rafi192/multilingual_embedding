@@ -1,5 +1,6 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
+from time import time
 
 
 class LaBSE_Embedder:
@@ -12,6 +13,7 @@ class LaBSE_Embedder:
             texts = [texts]
 
         vectors = self.model.encode(texts, normalize_embeddings=True)
+
         print(f"Embedded {len(texts)} texts using LaBSE.")
         print(f"First vector (truncated): {vectors[0][:5]}...")
         print("Vector shape:", np.array(vectors).shape)
@@ -19,19 +21,93 @@ class LaBSE_Embedder:
         return np.array(vectors).tolist()
 
 
-# --- Testing LaBSE Embedder ---
+def timed_embedding(embedder, text, lang_label):
+    start = time()
+    print(f"start time for {lang_label} embedding: {start}")
+
+    vectors = embedder.embed(text)
+
+    end = time()
+    print(f"end time for {lang_label} embedding: {end}")
+
+    elapsed = end - start
+    print(
+        f"{lang_label} embedding time: "
+        f"{elapsed:.6f} sec ({elapsed*1000:.2f} ms)"
+    )
+    print("-" * 60)
+
+    return vectors
+
+
+# ----------------- RUN -----------------
+
 obj_labse_embedder = LaBSE_Embedder()
-print("Testing LaBSE Embedder with multilingual sentences:")
-v_en = obj_labse_embedder.embed("I need milk. I love drinking milk.") # English
-v_bn = obj_labse_embedder.embed("আমি দুধ চাই। আমি দুধ খেতে ভালোবাসি।") #bangla
-v_es = obj_labse_embedder.embed("Necesito leche. Me encanta beber leche.") # Spanish
-v_fr = obj_labse_embedder.embed("J'ai besoin de lait. J'adore boire du lait.") # French
-v_hi = obj_labse_embedder.embed("मुझे दूध चाहिए। मुझे दूध पीना बहुत पसंद है।")  # Hindi
-v_ar = obj_labse_embedder.embed("أنا بحاجة إلى الحليب. أحب شرب الحليب!")    # Arabic
-v_ja = obj_labse_embedder.embed("私はミルクが必要です。ミルクを飲むのが大好きです。")    # Japanese
-v_zh = obj_labse_embedder.embed("我需要牛奶。我喜欢喝牛奶！")   # Chinese (Simplified)
-v_de = obj_labse_embedder.embed("Ich brauche Milch. Ich liebe es, Milch zu trinken.")  # German
-v_ru = obj_labse_embedder.embed("Мне нужно молоко. Я люблю пить молоко.")   # Russian
+
+print("Testing LaBSE Embedder with multilingual sentences:\n")
+
+v_en = timed_embedding(
+    obj_labse_embedder,
+    "I need milk. I love drinking milk.",
+    "english"
+)
+
+v_bn = timed_embedding(
+    obj_labse_embedder,
+    "আমি দুধ চাই। আমি দুধ খেতে ভালোবাসি।",
+    "bengali"
+)
+
+v_es = timed_embedding(
+    obj_labse_embedder,
+    "Necesito leche. Me encanta beber leche.",
+    "spanish"
+)
+
+v_fr = timed_embedding(
+    obj_labse_embedder,
+    "J'ai besoin de lait. J'adore boire du lait.",
+    "french"
+)
+
+v_hi = timed_embedding(
+    obj_labse_embedder,
+    "मुझे दूध चाहिए। मुझे दूध पीना बहुत पसंद है।",
+    "hindi"
+)
+
+v_ar = timed_embedding(
+    obj_labse_embedder,
+    "أنا بحاجة إلى الحليب. أحب شرب الحليب!",
+    "arabic"
+)
+
+v_ja = timed_embedding(
+    obj_labse_embedder,
+    "私はミルクが必要です。ミルクを飲むのが大好きです。",
+    "japanese"
+)
+
+v_zh = timed_embedding(
+    obj_labse_embedder,
+    "我需要牛奶。我喜欢喝牛奶！",
+    "chinese"
+)
+
+v_de = timed_embedding(
+    obj_labse_embedder,
+    "Ich brauche Milch. Ich liebe es, Milch zu trinken.",
+    "german"
+)
+
+v_ru = timed_embedding(
+    obj_labse_embedder,
+    "Мне нужно молоко. Я люблю пить молоко.",
+    "russian"
+)
+
+
+# ----------------- SIMILARITY -----------------
 
 v_en = np.array(v_en[0])
 v_bn = np.array(v_bn[0])
@@ -44,7 +120,10 @@ v_zh = np.array(v_zh[0])
 v_de = np.array(v_de[0])
 v_ru = np.array(v_ru[0])
 
-def cosine(a, b): return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+def cosine(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
 
 pairs = [
     ("EN–BN", v_en, v_bn),
@@ -58,9 +137,7 @@ pairs = [
     ("EN–RU", v_en, v_ru),
 ]
 
-print("Pairs type:", type(pairs))
-
+print("\n=== Similarity Scores ===")
 for lang_pair, vec1, vec2 in pairs:
     similarity = cosine(vec1, vec2)
-    print(f"{lang_pair} similarity: {similarity}")
-
+    print(f"{lang_pair} similarity: {similarity:.4f}")

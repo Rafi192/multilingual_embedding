@@ -1,35 +1,39 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
-
+from time import perf_counter
 
 class BGE_M3_Embedder:
     def __init__(self):
         self.model = SentenceTransformer("BAAI/bge-m3")
 
-
     def embed(self, texts):
         if isinstance(texts, str):
             texts = [texts]
-        vectors = self.model.encode(texts, normalize_embeddings=True)
-        print(f"Embedded {len(texts)} texts using BGE-M3 model.")
-        print(f"First vector (truncated): {vectors[0][:5]}...")
-        print("Vector shape:", np.array(vectors).shape)
+        return self.model.encode(texts, normalize_embeddings=True)
 
-        return np.array(vectors).tolist()
+embedder = BGE_M3_Embedder()
 
+# 🔥 Warm-up (DO NOT MEASURE)
+embedder.embed("warm up")
 
-obj_bge_m3_embedder = BGE_M3_Embedder()
+def benchmark(text, runs=10):
+    times = []
+    for _ in range(runs):
+        start = perf_counter()
+        embedder.embed(text)
+        end = perf_counter()
+        times.append(end - start)
+    return np.mean(times), np.std(times)
 
-v_en = obj_bge_m3_embedder.embed("I love cats!")
-v_bn = obj_bge_m3_embedder.embed("আমি বিড়ালকে ভালোবাসি!")
-v_es = obj_bge_m3_embedder.embed("¡Me encantan los gatos!")
+langs = {
+    "EN": "I love cats!",
+    "BN": "আমি বিড়ালকে ভালোবাসি!",
+    "ES": "¡Me encantan los gatos!"
+}
 
-v_en = np.array(v_en[0])
-v_bn = np.array(v_bn[0])
-v_es = np.array(v_es[0])
-
-def cosine(a, b): return np.dot(a, b)
-
-print("EN–BN similarity:", cosine(v_en, v_bn))
-print("EN–ES similarity:", cosine(v_en, v_es))
-print("BN–ES similarity:", cosine(v_bn, v_es))
+for lang, text in langs.items():
+    avg, std = benchmark(text)
+    print(
+        f"{lang}: {avg:.6f} sec | {avg*1000:.2f} ms "
+        f"(± {std*1000:.2f} ms)"
+    )

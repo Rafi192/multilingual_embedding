@@ -1,37 +1,66 @@
 from sentence_transformers import SentenceTransformer
 import numpy as np
+from time import time
 
 
 class GTE_Multilingual_Embedder:
     def __init__(self):
-        self.model = SentenceTransformer("Alibaba-NLP/gte-multilingual-base", trust_remote_code=True)
+        self.model = SentenceTransformer(
+            "Alibaba-NLP/gte-multilingual-base",
+            trust_remote_code=True
+        )
 
     def embed(self, texts):
         if isinstance(texts, str):
             texts = [texts]
-            
+
         vectors = self.model.encode(texts, normalize_embeddings=True)
+
         print(f"Embedded {len(texts)} texts using GTE-Multilingual model.")
         print(f"First vector (truncated): {vectors[0][:5]}...")
         print("Vector shape:", np.array(vectors).shape)
+
         return np.array(vectors).tolist()
 
 
+def timed_embedding(embedder, text, lang_label):
+    start = time()
+    print(f"start time for {lang_label} embedding: {start}")
+
+    vectors = embedder.embed(text)
+
+    end = time()
+    print(f"end time for {lang_label} embedding: {end}")
+
+    elapsed = end - start
+    print(
+        f"{lang_label} embedding time: "
+        f"{elapsed:.6f} sec ({elapsed*1000:.2f} ms)"
+    )
+    print("-" * 60)
+
+    return vectors
+
+
+# ----------------- RUN -----------------
+
 obj_gte_multilingual_embedder = GTE_Multilingual_Embedder()
 
-print("Testing GTE-Multilingual Embedder with multilingual sentences:")
+print("Testing GTE-Multilingual Embedder with multilingual sentences:\n")
 
-v_en = obj_gte_multilingual_embedder.embed("I love cats!")                            # English
-v_bn = obj_gte_multilingual_embedder.embed("আমি বিড়ালকে ভালোবাসি!")                  # Bangla
-v_es = obj_gte_multilingual_embedder.embed("¡Me encantan los gatos!")                 # Spanish
-v_fr = obj_gte_multilingual_embedder.embed("J'adore les chats !")                    # French
-v_hi = obj_gte_multilingual_embedder.embed("मुझे बिल्लियाँ बहुत पसंद हैं!")             # Hindi
-v_ar = obj_gte_multilingual_embedder.embed("أنا أحب القطط!")                           # Arabic
-v_ja = obj_gte_multilingual_embedder.embed("私は猫が大好きです！")                       # Japanese
-v_zh = obj_gte_multilingual_embedder.embed("我爱猫！")                                  # Chinese (Simplified)
-v_de = obj_gte_multilingual_embedder.embed("Ich liebe Katzen!")  # German
-v_ru = obj_gte_multilingual_embedder.embed("Я люблю кошек!")                          # Russian
+v_en = timed_embedding(obj_gte_multilingual_embedder, "I love cats!", "english")
+v_bn = timed_embedding(obj_gte_multilingual_embedder, "আমি বিড়ালকে ভালোবাসি!", "bengali")
+v_es = timed_embedding(obj_gte_multilingual_embedder, "¡Me encantan los gatos!", "spanish")
+v_fr = timed_embedding(obj_gte_multilingual_embedder, "J'adore les chats !", "french")
+v_hi = timed_embedding(obj_gte_multilingual_embedder, "मुझे बिल्लियाँ बहुत पसंद हैं!", "hindi")
+v_ar = timed_embedding(obj_gte_multilingual_embedder, "أنا أحب القطط!", "arabic")
+v_ja = timed_embedding(obj_gte_multilingual_embedder, "私は猫が大好きです！", "japanese")
+v_zh = timed_embedding(obj_gte_multilingual_embedder, "我爱猫！", "chinese")
+v_de = timed_embedding(obj_gte_multilingual_embedder, "Ich liebe Katzen!", "german")
+v_ru = timed_embedding(obj_gte_multilingual_embedder, "Я люблю кошек!", "russian")
 
+
+# ----------------- SIMILARITY -----------------
 
 v_en = np.array(v_en[0])
 v_bn = np.array(v_bn[0])
@@ -44,13 +73,10 @@ v_zh = np.array(v_zh[0])
 v_de = np.array(v_de[0])
 v_ru = np.array(v_ru[0])
 
-# def cosine(a, b): return np.dot(a, b)
 
-def cosine(a, b): return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+def cosine(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
-# print("EN–BN similarity:", cosine(v_en, v_bn))
-# print("EN–ES similarity:", cosine(v_en, v_es))
-# print("BN–ES similarity:", cosine(v_bn, v_es))
 
 pairs = [
     ("EN–BN", v_en, v_bn),
@@ -66,4 +92,4 @@ pairs = [
 
 print("\n=== Similarity Scores ===")
 for name, a, b in pairs:
-    print(f"{name}: {cosine(np.array(a), np.array(b)):.4f}")
+    print(f"{name}: {cosine(a, b):.4f}")
